@@ -1,6 +1,6 @@
 # vim-plist
 
-This vim bundle adds extensive support for [property lists](http://en.wikipedia.org/wiki/Property_list) (*plist*) files on OS X.
+This vim bundle adds complete support for [property lists](http://en.wikipedia.org/wiki/Property_list) (*plist*) files on OS X.
 
 The plugin uses the underlying **plutil** tool for reading and writing property
 lists. It supports reading and writing binary, xml and json files.
@@ -45,13 +45,13 @@ options availabe.
 
 * Change the plist format used when saving. By default it preserves the format
   the file had when opened (e.g json is saved as json and xml as xml).
-  Available options are: binary, json and xml.
+  Available options are: *binary*, *json* and *xml*.
 
     ```vim
     let g:plist_save_as = ''
     ```
 
-* Set the display format for binary property lists (json or xml).
+* Set the display format for binary property lists (*json* or *xml*).
 
     ```vim
     let g:plist_display_format_binary = 'xml'
@@ -66,12 +66,31 @@ options availabe.
     let g:plist_display_format_all = ''
     ```
 
+## Notes
+
+If you want syntax checking I highly recommend [Syntastic][syntastic] since it
+has support for property lists.
+
+In case you use the `sudo tee` trick for writing to root owned files when using
+Vim, it will **not** work with plist files. This is because the *tee* trick
+uses the underlying Vim *write* function which bypasses the plugins
+`BufWriteCmd` hook.
+
+## Todo
+
+* Integrate syntax support (for some reason `setlocal syntax=javascript/xml` does not work)
+
+* Add saving format options while editing (e.g. `:PlistSaveAs json`)
+
+* Change display format while editing (e.g. `:PlistFormat xml`)
+
 ## License
 
-MIT : [License][license]
+MIT: [License][license]
 
 [neobundle]: https://github.com/Shougo/neobundle.vim
 [vundle]: https://github.com/gmarik/vundle
 [pathogen]: https://github.com/tpope/vim-pathogen
 [vim-plug]: https://github.com/junegunn/vim-plug
+[syntastic]: https://github.com/scrooloose/syntastic
 [license]: https://github.com/darfink/vim-plist/blob/master/LICENSE
