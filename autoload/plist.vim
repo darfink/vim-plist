@@ -54,7 +54,7 @@ function! plist#Write()
   " since it will give the user additional error checking (he will be notified
   " if there is any error upon saving).
   execute "silent '[,']write !plutil -convert " . s:mapping[save_format] .
-        \ ' - -o ' . shellescape(filename)
+        \ ' - -o ' . shellescape(filename, 1)
 
   if (v:shell_error)
     echohl WarningMsg
