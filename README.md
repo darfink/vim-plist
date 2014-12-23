@@ -3,11 +3,11 @@
 This vim bundle adds complete support for [property lists](http://en.wikipedia.org/wiki/Property_list) (*plist*) files on OS X.
 
 The plugin uses the underlying **plutil** tool for manipulating property lists.
-It supports reading and writing *binary*, *xml* and *json* formats.
+It supports reading and writing in *binary*, *xml* and *json* formats.
 
 ## Requirements
 
-- Vim with `BufWriteCmd` support
+- Vim 7.2 or later
 - plutil (bundled with OS X)
 
 ## Installation
@@ -53,7 +53,7 @@ options availabe.
     control the display format of binary property lists, but also for *json*
     and *xml* files. If the option is set to *json*, property lists in *xml*
     format will be displayed as *json* as well (but the format used when saving
-    will be the same).
+    will remain).
 
 
 - Change the plist format used when saving property lists:
@@ -73,7 +73,7 @@ options availabe.
     ```
 
     Vim does not have inherent support for *json* files (it reverts to
-    JavaScript syntax). If you do want a specific filetype for *json* property
+    *JavaScript* syntax). If you do want a specific filetype for *json* property
     lists, when using a json plugin (such as [vim-json][vim-json]), you can
     specify *json* as the filetype instead.
 
@@ -85,7 +85,10 @@ has integrated support for property lists.
 In case you use the `sudo tee` trick for writing to root owned files when using
 Vim, it will **not** work with plist files. This is because the *tee* trick
 uses the underlying Vim *write* function which bypasses the plugins
-`BufWriteCmd` hook.
+`BufWriteCmd` and `FileWriteCmd` hooks.
+
+This does not add *plist* as a new filetype, but merely conversion
+functionality between the different formats.
 
 ## Todo
 
