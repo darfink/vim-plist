@@ -96,9 +96,9 @@ endfunction
 function! plist#DetectFormat(filename)
   let content = readfile(a:filename, 1, 2)
 
-  if content[0] =~ "^bplist"
+  if len(content) > 0 && content[0] =~ "^bplist"
     let b:plist_original_format = 'binary'
-  elseif content[1] =~ '^<!DOCTYPE plist'
+  elseif len(content) > 1 && content[1] =~ '^<!DOCTYPE plist'
     let b:plist_original_format = 'xml'
   else
     let b:plist_original_format = 'json'
