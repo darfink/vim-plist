@@ -2,8 +2,8 @@
 
 This vim bundle adds complete support for [property lists](http://en.wikipedia.org/wiki/Property_list) (*plist*) files on OS X.
 
-The plugin uses the underlying **plutil** tool for reading and writing property
-lists. It supports reading and writing binary, xml and json files.
+The plugin uses the underlying **plutil** tool for manipulating property lists.
+It supports reading and writing *binary*, *xml* and *json* formats.
 
 ## Requirements
 
@@ -43,33 +43,44 @@ Use your favorite plugin manager.
 None! Just go ahead and edit plist files. Although there are some customization
 options availabe.
 
-* Change the plist format used when saving. By default it preserves the format
-  the file had when opened (e.g json is saved as json and xml as xml).
-  Available options are: *binary*, *json* and *xml*.
+- Change the display format used when editing property lists:
 
     ```vim
-    let g:plist_save_as = ''
+    let g:plist_display_format = 'xml'
     ```
 
-* Set the display format for binary property lists (*json* or *xml*).
+    Available options for this command; *json* or *xml*. This does not only
+    control the display format of binary property lists, but also for *json*
+    and *xml* files. If the option is set to *json*, property lists in *xml*
+    format will be displayed as *json* as well (but the format used when saving
+    will be the same).
+
+
+- Change the plist format used when saving property lists:
 
     ```vim
-    let g:plist_display_format_binary = 'xml'
+    let g:plist_save_format = ''
     ```
 
-* Set an overriding display format that is always used for property lists (e.g
-  when you open a xml plist it can be display as json or the other way around).
-  This option overrides the `g:plist_display_format_binary` option. Json or xml
-  is available.
+    By default, property lists are saved in the same format as they had when
+    opened. If you want to override this and always save property lists in a
+    specific format, you can use *json*, *xml* or *binary* format.
+
+- Change the filetype used for property lists in *json* format:
 
     ```vim
-    let g:plist_display_format_all = ''
+    let g:plist_json_filetype = 'javascript'
     ```
+
+    Vim does not have inherent support for *json* files (it reverts to
+    JavaScript syntax). If you do want a specific filetype for *json* property
+    lists, when using a json plugin (such as [vim-json][vim-json]), you can
+    specify *json* as the filetype instead.
 
 ## Notes
 
 If you want syntax checking I highly recommend [Syntastic][syntastic] since it
-has support for property lists.
+has integrated support for property lists.
 
 In case you use the `sudo tee` trick for writing to root owned files when using
 Vim, it will **not** work with plist files. This is because the *tee* trick
@@ -78,11 +89,9 @@ uses the underlying Vim *write* function which bypasses the plugins
 
 ## Todo
 
-* Integrate syntax support (for some reason `setlocal syntax=javascript/xml` does not work)
+- Add saving format options while editing (e.g. `:PlistSaveAs json`)
 
-* Add saving format options while editing (e.g. `:PlistSaveAs json`)
-
-* Change display format while editing (e.g. `:PlistFormat xml`)
+- Change display format while editing (e.g. `:PlistFormat xml`)
 
 ## License
 
@@ -92,5 +101,6 @@ MIT: [License][license]
 [vundle]: https://github.com/gmarik/vundle
 [pathogen]: https://github.com/tpope/vim-pathogen
 [vim-plug]: https://github.com/junegunn/vim-plug
+[vim-json]: https://github.com/elzr/vim-json
 [syntastic]: https://github.com/scrooloose/syntastic
 [license]: https://github.com/darfink/vim-plist/blob/master/LICENSE

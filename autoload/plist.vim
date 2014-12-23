@@ -6,79 +6,112 @@
 " Defines the mapping between the vim-plist options and plutil arguments
 let s:mapping = { 'json': 'json', 'binary': 'binary1', 'xml': 'xml1' }
 
-function! plist#ConvertBuffer(type)
-  " We need to use binary format otherwise new lines and miscellaneous
-  " whitespace will cause the conversion to fail.
-  setlocal binary
+function! plist#Read(bufread)
+  " get the filename of the current buffer
+  let filename = expand('<afile>')
 
-  " Converts the current buffer's content to the specified type. There are no
-  " issues with converting a type to its own (e.g. json → json).
-  execute "silent '[,']!plutil -convert " . s:mapping[a:type] . " -r - -o -"
-
-  " After the conversion we can continue to treat the file as text
-  setlocal nobinary
-
-  if v:shell_error != 0
-    redraw!
-    echohl WarningMsg | echo '***warning*** (plist#ConvertBuffer) unable to read plist file' | echohl None
-  endif
-endfunction
-
-function! plist#Read()
-  " Identify the plist content format
-  if getline("'[") =~ "^bplist"
-    let l:display_format = g:plist_display_format_binary
-    let b:plist_original_format = 'binary'
-  elseif getline(2) =~ '<!DOCTYPE plist'
-    let b:plist_original_format = 'xml'
-    let l:display_format = 'xml'
-  else
-    " Assume the file is json if it isn't xml or binary
-    let b:plist_original_format = 'json'
-    let l:display_format = 'json'
+  " If the file does not exist, there is nothing to convert
+  if !filereadable(filename)
+    " We cannot do much more than leaving the buffer creation to Vim
+    silent execute ':doautocmd BufNewFile ' . fnameescape(filename)
+    return
   endif
 
-  if len(g:plist_display_format_all)
-    " We can only display plists in either xml or json format
-    if g:plist_display_format_all != 'xml' && g:plist_display_format_all != 'json'
-      redraw!
-      echohl WarningMsg | echo '***warning*** (plist#Read) g:plist_display_format_all had an invalid value, defaulting to xml' | echohl None
+  " Convert the file content directly, and read into the current buffer
+  execute 'silent read !plutil -convert ' . s:mapping[g:plist_display_format] .
+        \ ' -r ' . shellescape(filename, 1) . ' -o -'
 
-      let g:plist_display_format_all = 'xml'
+  if (v:shell_error)
+    echohl WarningMsg
+    let blackhole = input('Plist could not be converted! (Press ENTER)')
+    echohl None
+
+    " Only wipeout the buffer if we were creating one to start with.
+    " FileReadCmd just reads the content into the existing buffer
+    if a:bufread
+      silent bwipeout!
     endif
 
-    " If the user has specified a 'format all' option, that means that every
-    " type should be displayed as specified. That includes displaying json
-    " plist files as xml or the other way around.
-    let l:display_format = g:plist_display_format_all
+    return
   endif
 
-  " Even when the source and display format is (for example) xml, we convert
-  " the buffer's content. This ensures that the content has a valid plist
-  " format, and that the output is normalized.
-  call plist#ConvertBuffer(l:display_format)
+  " We need to know in which format we should save the file
+  call plist#DetectFormat(filename)
 
-  " TODO: Set the syntax to use (xml or JavaScript)
+  " Tell the user about any information we've parsed
+  call plist#DisplayInfo(filename, b:plist_original_format)
 endfunction
 
 function! plist#Write()
-  " If the user has not specified their preferred format when saving, we use
-  " the same format that the filed had originally. Otherwise the user option
-  " takes precedence.
-  let l:save_as = !len(g:plist_save_as) ? b:plist_original_format : g:plist_save_as
+  " Cache the argument filename destination
+  let filename = resolve(expand('<afile>'))
+
+  " If the user has not specified his preferred format when saving, we use the
+  " same format that the filed had originally. Otherwise the user option takes
+  " precedence.
+  let save_format = !len(g:plist_save_format) ? b:plist_original_format : g:plist_save_format
 
   " Use plutil even when the current format is the same as the target format,
   " since it will give the user additional error checking (he will be notified
   " if there is any error upon saving).
-  execute "silent write !plutil -convert " . s:mapping[l:save_as] . " - -o %"
+  execute "silent '[,']write !plutil -convert " . s:mapping[save_format] .
+        \ ' - -o ' . shellescape(filename)
 
-  redraw!
-  if v:shell_error != 0
-    echohl Error | echo '***error*** (plist#Write) unable to write plist file' | echohl None
+  if (v:shell_error)
+    echohl WarningMsg
+    let blackhole = input('Plist could not be saved! (Press ENTER)')
+    echohl None
+
+    return
   else
-    " Notify the user about the filename, size and plist format (from → to)
-    echo '"' . expand('%') . '", ' . getfsize(expand('%')) . 'B [' . b:plist_original_format . '] → [' . l:save_as . ']'
-  endif
+    " Give the user visual feedback about the write
+    call plist#DisplayInfo(filename, save_format)
 
-  setlocal nomod
+    " This indicates a successful write
+    setlocal nomodified
+  endif
+endfunction
+
+function! plist#ReadPost()
+  " In order to make :undo a no-op immediately after the buffer is read,
+  " we need to do this dance with 'undolevels'.  Actually discarding the undo
+  " history requires performing a change after setting 'undolevels' to -1 and,
+  " luckily, we have one we need to do (delete the extra line from the :r
+  " command)
+  let levels = &undolevels
+  set undolevels=-1
+  silent 1delete
+  let &undolevels = levels
+
+  " Update the file content type
+  call plist#SetFiletype()
+endfunction
+
+function! plist#SetFiletype()
+  if g:plist_display_format == 'json'
+    " There is no specific support for json bundled with Vim, so we let the
+    " user decide the filetype (by default we assume 'JavaScript').
+    execute 'set filetype=' . g:plist_json_filetype
+  else
+    " We hardcode this to xml, since it maps one-to-one
+    set filetype=xml
+  endif
+endfunction
+
+function! plist#DetectFormat(filename)
+  let content = readfile(a:filename, 1, 2)
+
+  if content[0] =~ "^bplist"
+    let b:plist_original_format = 'binary'
+  elseif content[1] =~ '^<!DOCTYPE plist'
+    let b:plist_original_format = 'xml'
+  else
+    let b:plist_original_format = 'json'
+  endif
+endfunction
+
+function! plist#DisplayInfo(filename, format)
+  " Notify the user about the filename, size and plist format
+  redraw!
+  echo '"' . a:filename . '", ' . getfsize(a:filename) . 'B [' . a:format . ']'
 endfunction
