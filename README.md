@@ -53,7 +53,7 @@ options availabe.
     control the display format of binary property lists, but also for *json*
     and *xml* files. If the option is set to *json*, property lists in *xml*
     format will be displayed as *json* as well (but the format used when saving
-    will remain).
+    will be preserved).
 
 
 - Change the plist format used when saving property lists:
@@ -88,7 +88,7 @@ uses the underlying Vim *write* function which bypasses the plugins
 `BufWriteCmd` and `FileWriteCmd` hooks.
 
 This does not add *plist* as a new filetype, but merely conversion
-functionality between the different formats.
+functionality between the different representible formats.
 
 ## Todo
 

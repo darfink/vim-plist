@@ -1,4 +1,3 @@
-" Language:    Plist
 " Maintainer:  Elliott Linder <elliott.darfink@gmail.com>
 " URL:         http://github.com/darfink/vim-plist
 " License:     MIT

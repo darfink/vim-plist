@@ -1,4 +1,3 @@
-" Language:    Plist
 " Maintainer:  Elliott Linder <elliott.darfink@gmail.com>
 " URL:         http://github.com/darfink/vim-plist
 " License:     MIT
@@ -7,17 +6,17 @@
 let s:mapping = { 'json': 'json', 'binary': 'binary1', 'xml': 'xml1' }
 
 function! plist#Read(bufread)
-  " get the filename of the current buffer
+  " Get the filename of the current argument
   let filename = expand('<afile>')
 
   " If the file does not exist, there is nothing to convert
   if !filereadable(filename)
-    " We cannot do much more than leaving the buffer creation to Vim
+    " We simply leave the buffer handling to Vim
     silent execute ':doautocmd BufNewFile ' . fnameescape(filename)
     return
   endif
 
-  " Convert the file content directly, and read into the current buffer
+  " Convert the file's content directly, and read it into the current buffer
   execute 'silent read !plutil -convert ' . s:mapping[g:plist_display_format] .
         \ ' -r ' . shellescape(filename, 1) . ' -o -'
 
@@ -47,7 +46,7 @@ function! plist#Write()
   let filename = resolve(expand('<afile>'))
 
   " If the user has not specified his preferred format when saving, we use the
-  " same format that the filed had originally. Otherwise the user option takes
+  " same format as the filed had originally. Otherwise the user option takes
   " precedence.
   let save_format = !len(g:plist_save_format) ? b:plist_original_format : g:plist_save_format
 
@@ -73,11 +72,7 @@ function! plist#Write()
 endfunction
 
 function! plist#ReadPost()
-  " In order to make :undo a no-op immediately after the buffer is read,
-  " we need to do this dance with 'undolevels'.  Actually discarding the undo
-  " history requires performing a change after setting 'undolevels' to -1 and,
-  " luckily, we have one we need to do (delete the extra line from the :r
-  " command)
+  " This needs to be validated...
   let levels = &undolevels
   set undolevels=-1
   silent 1delete
