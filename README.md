@@ -1,5 +1,7 @@
 # vim-plist
 
+![Screenshot of vim-plist in action](http://i.imgur.com/ezBKTK7.png)
+
 This vim bundle adds complete support for [property lists](http://en.wikipedia.org/wiki/Property_list) (*plist*) files on OS X.
 
 The plugin uses the underlying **plutil** tool for manipulating property lists.
