@@ -7,11 +7,11 @@
 let s:mapping = { 'json': 'json', 'binary': 'binary1', 'xml': 'xml1' }
 
 function! plist#ConvertBuffer(type)
-  " We need to use binary format until otherwise new lines and miscellaneous
+  " We need to use binary format otherwise new lines and miscellaneous
   " whitespace will cause the conversion to fail.
   setlocal binary
 
-  " Converts the current buffers contents to the specified type. There are no
+  " Converts the current buffer's content to the specified type. There are no
   " issues with converting a type to its own (e.g. json → json).
   execute "silent '[,']!plutil -convert " . s:mapping[a:type] . " -r - -o -"
 
@@ -54,7 +54,7 @@ function! plist#Read()
   endif
 
   " Even when the source and display format is (for example) xml, we convert
-  " the buffer contents. This ensures that the content has a valid plist
+  " the buffer's content. This ensures that the content has a valid plist
   " format, and that the output is normalized.
   call plist#ConvertBuffer(l:display_format)
 
@@ -62,14 +62,14 @@ function! plist#Read()
 endfunction
 
 function! plist#Write()
-  " If the user have not specified their preferred format when saving, we use
+  " If the user has not specified their preferred format when saving, we use
   " the same format that the filed had originally. Otherwise the user option
   " takes precedence.
   let l:save_as = !len(g:plist_save_as) ? b:plist_original_format : g:plist_save_as
 
   " Use plutil even when the current format is the same as the target format,
-  " since it will give the user free error checking (he will be notified if
-  " there is any error upon saving).
+  " since it will give the user additional error checking (he will be notified
+  " if there is any error upon saving).
   execute "silent write !plutil -convert " . s:mapping[l:save_as] . " - -o %"
 
   redraw!

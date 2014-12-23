@@ -17,7 +17,7 @@ augroup END
 if !exists('g:plist_save_as')
   " Save in the same format as the plist was originally opened in by default.
   " Available options are: xml, json & binary
-	let g:plist_save_as = ''
+  let g:plist_save_as = ''
 end
 
 if !exists('g:plist_display_format_binary')
