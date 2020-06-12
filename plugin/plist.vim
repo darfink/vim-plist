@@ -32,9 +32,3 @@ if !exists('g:plist_save_format')
   " Available options are: xml, json & binary
   let g:plist_save_format = ''
 end
-
-if !exists('g:plist_json_filetype')
-  " Controls the filetype used for json plists (JavaScript is what Vim uses by
-  " default for these filetypes).
-  let g:plist_json_filetype = 'javascript'
-end
