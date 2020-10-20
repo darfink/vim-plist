@@ -66,6 +66,7 @@ endfunction
 function! plist#Write()
   " Cache the argument filename destination
   let filename = resolve(expand('<afile>'))
+  let b:plist_original_format = plist#GetOriginalFormat()
 
   " If the user has not specified his preferred format when saving, use the
   " same format as the file had originally. Otherwise the user option takes
@@ -110,7 +111,14 @@ function! plist#ReadPost()
   call plist#SetFiletype()
 endfunction
 
+function! plist#GetOriginalFormat()
+  let filename = expand('<afile>')
+  return plist#DetectFormat(filename)
+endfunction
+
+
 function! plist#SetFiletype()
+  let b:plist_original_format = plist#GetOriginalFormat()
   if g:plist_display_format == 'json' && s:has_plist || b:plist_original_format == 'json' && !s:has_plist
     execute 'set filetype=' . (len(getcompletion('json', 'filetype')) ? 'json' : 'javascript')
   else
