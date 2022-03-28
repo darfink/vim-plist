@@ -13,11 +13,12 @@ augroup plist
   autocmd!
 
   " Output operations
-  autocmd BufWriteCmd,FileWriteCmd *.plist call plist#Write()
+  autocmd BufWriteCmd *.plist call plist#BufWriteCmd()
+  autocmd FileWriteCmd *.plist call plist#FileWriteCmd()
 
   " Input operations
-  autocmd BufReadCmd *.plist call plist#Read(1) | call plist#ReadPost()
-  autocmd FileReadCmd *.plist call plist#Read(0) | call plist#SetFiletype()
+  autocmd BufReadCmd *.plist call plist#BufReadCmd()
+  autocmd FileReadCmd *.plist call plist#FileReadCmd()
 
   " TODO: Add support for extensionless plists
 augroup END

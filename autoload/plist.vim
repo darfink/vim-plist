@@ -8,41 +8,58 @@ let s:mapping_util = { 'binary': 'bin', 'xml': 'xml' }
 let s:has_plist = executable('plutil')
 let s:has_plistutil = executable('plistutil')
 
-function! s:warn(message)
+function! s:warn(message) abort
   echohl WarningMsg
-  let blackhole = input(a:message . ' (Press ENTER)')
+  unsilent echomsg a:message
+  call inputsave() | call input('(Press ENTER)') | call inputrestore()
   echohl None
 endfunction
 
-function! plist#Read(bufread)
+function! plist#BufReadCmd() abort
+  if s:ReadCmd(1)
+    call plist#BufReadPost()
+    doautocmd BufReadPost
+    return 1
+  endif
+  return 0
+endfunction
+function! plist#FileReadCmd() abort
+  if s:ReadCmd(0)
+    call plist#FileReadPost()
+    execute 'doautocmd FileReadPost ' .. fnameescape(expand('<afile>'))
+    return 1
+  endif
+  return 0
+endfunction
+function! s:ReadCmd(buf_read) abort
   " Get the filename of the current argument
-  let filename = expand('<afile>')
+  let plist_filename = expand('<afile>')
 
   " If the file does not exist, there is nothing to convert
-  if !filereadable(filename)
-    silent execute 'doautocmd BufNewFile ' . fnameescape(filename)
-    return
+  if !filereadable(plist_filename)
+    execute 'doautocmd BufNewFile ' .. fnameescape(plist_filename)
+    return 0
   endif
 
   if !s:has_plist && !s:has_plistutil
     echoerr 'plutil is not found in $PATH'
-    silent execute 'read ' . fnameescape(filename)
-    return
+    silent execute 'read ' . fnameescape(plist_filename)
+    return 0
   endif
 
   " Determine which format should be used when saving
-  let b:plist_original_format = plist#DetectFormat(filename)
+  let b:plist_original_format = plist#DetectFormat(plist_filename)
 
   " Convert the file's content and read it into the current buffer
   if s:has_plist
     execute 'silent read !plutil -convert ' . s:mapping[g:plist_display_format]
-      \ . ' -r ' . shellescape(filename, 1) . ' -o -'
+      \ . ' -r ' . shellescape(plist_filename, 1) . ' -o -'
   else
     if g:plist_display_format == 'json'
       call s:warn('Plistutil does not support json display format')
     endif
 
-    execute 'silent read !plistutil -f xml -i ' . shellescape(filename, 1) . ' -o -'
+    execute 'silent read !plistutil -f xml -i ' . shellescape(plist_filename, 1) . ' -o -'
   endif
 
   let b:read_error = v:shell_error != 0
@@ -52,18 +69,28 @@ function! plist#Read(bufread)
 
     " Only wipeout the buffer if one was being created to start with.
     " FileReadCmd just reads the content into the existing buffer
-    if a:bufread
-      silent bwipeout!
+    if a:buf_read
+      let plist_bufnr = bufnr()
+      silent execute 'buffer! #'
+      silent execute 'bwipeout! ' . plist_bufnr
     endif
 
-    return
+    return 0
   endif
 
   " Tell the user about any information parsed
-  call plist#DisplayInfo(filename, b:plist_original_format)
+  call plist#DisplayInfo(plist_filename, b:plist_original_format)
+
+  return 1
 endfunction
 
-function! plist#Write()
+function! plist#BufWriteCmd() abort
+  return s:WriteCmd()
+endfunction
+function! plist#FileWriteCmd() abort
+  return s:WriteCmd()
+endfunction
+function! s:WriteCmd() abort
   " Cache the argument filename destination
   let filename = resolve(expand('<afile>'))
 
@@ -89,7 +116,7 @@ function! plist#Write()
 
   if (v:shell_error)
     call s:warn('Plist could not be saved!')
-    return
+    return 0
   else
     " Give the user visual feedback about the write
     call plist#DisplayInfo(filename, save_format)
@@ -97,9 +124,11 @@ function! plist#Write()
     " This indicates a successful write
     setlocal nomodified
   endif
+
+  return 1
 endfunction
 
-function! plist#ReadPost()
+function! plist#BufReadPost() abort
   " This needs to be validated...
   let levels = &undolevels
   set undolevels=-1
@@ -110,15 +139,23 @@ function! plist#ReadPost()
   call plist#SetFiletype()
 endfunction
 
-function! plist#SetFiletype()
+function! plist#FileReadPost() abort
+  " Update the file content type
+  call plist#SetFiletype()
+endfunction
+
+function! plist#SetFiletype() abort
   if g:plist_display_format == 'json' && s:has_plist || b:plist_original_format == 'json' && !s:has_plist
-    execute 'set filetype=' . (len(getcompletion('json', 'filetype')) ? 'json' : 'javascript')
+    let filetype = len(getcompletion('json', 'filetype')) ? 'json' : 'javascript'
   else
-    set filetype=xml
+    let filetype = 'xml'
+  endif
+  if &filetype !=# filetype
+    execute 'set filetype=' . filetype
   endif
 endfunction
 
-function! plist#DetectFormat(filename)
+function! plist#DetectFormat(filename) abort
   let content = readfile(a:filename, 1, 2)
 
   if len(content) > 0 && content[0] =~ "^bplist"
@@ -130,7 +167,7 @@ function! plist#DetectFormat(filename)
   endif
 endfunction
 
-function! plist#DisplayInfo(filename, format)
+function! plist#DisplayInfo(filename, format) abort
   " Notify the user about the filename, size and plist format
   redraw!
   echo '"' . a:filename . '", ' . getfsize(a:filename) . 'B [' . a:format . ']'
