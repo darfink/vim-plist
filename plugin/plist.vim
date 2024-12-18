@@ -13,8 +13,8 @@ augroup plist
   autocmd!
 
   " Output operations
-  autocmd BufWriteCmd *.plist call plist#BufWriteCmd()
-  autocmd FileWriteCmd *.plist call plist#FileWriteCmd()
+  autocmd BufWriteCmd ++nested *.plist call plist#BufWriteCmd()
+  autocmd FileWriteCmd ++nested *.plist call plist#FileWriteCmd()
 
   " Input operations
   autocmd BufReadCmd *.plist call plist#BufReadCmd()
